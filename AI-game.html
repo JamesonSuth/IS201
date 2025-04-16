@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 2rem;
+    }
+    #game-container {
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #4caf50;
+      background: #222;
+      display: block;
+      margin: 0 auto;
+    }
+    #score {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    #start-over {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #4caf50;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./css/elements.css">
+  <a href="#" >Snake Game</a>
+  <a href="index.html">Home Page</a>
+</head>
+<body>
+  <div id="game-container">
+    <div id="score">Score: 0</div>
+    <canvas id="game" width="400" height="400" tabindex="1"></canvas>
+    <button id="start-over">Start Over</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("score");
+    const startOverBtn = document.getElementById("start-over");
+
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake, dx, dy, food, gameOver, score, gameInterval;
+
+    // Initialize or reset the game state
+    function initGame() {
+      snake = [{ x: 10, y: 10 }];
+      dx = 1;
+      dy = 0;
+      // Start with a food placed in the center-ish area
+      food = { x: 15, y: 15 };
+      gameOver = false;
+      score = 0;
+      updateScore();
+      startOverBtn.style.display = "none";
+      canvas.focus();
+
+      // Clear any existing interval before starting a new game loop
+      if (gameInterval) clearInterval(gameInterval);
+      gameInterval = setInterval(gameLoop, 100);
+    }
+
+    // Game loop
+    function gameLoop() {
+      if (gameOver) return;
+
+      // Move snake: create new head
+      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+      snake.unshift(head);
+
+      // Check if snake eats food
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        updateScore();
+        placeFood();
+      } else {
+        snake.pop();
+      }
+
+      // Check collisions with wall or self
+      if (
+        head.x < 0 || head.x >= tileCount ||
+        head.y < 0 || head.y >= tileCount ||
+        snake.slice(1).some(seg => seg.x === head.x && seg.y === head.y)
+      ) {
+        gameOver = true;
+        clearInterval(gameInterval);
+        startOverBtn.style.display = "inline-block";
+        return;
+      }
+
+      // Draw background
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw snake
+      ctx.fillStyle = "#4caf50";
+      snake.forEach(part => {
+        ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2);
+      });
+
+      // Draw food
+      ctx.fillStyle = "#ff5252";
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+    }
+
+    // Place food at a random position within the grid
+    function placeFood() {
+      food = {
+        x: Math.floor(Math.random() * tileCount),
+        y: Math.floor(Math.random() * tileCount)
+      };
+    }
+
+    // Update the score display
+    function updateScore() {
+      scoreDisplay.textContent = `Score: ${score}`;
+    }
+
+    // Change snake direction based on arrow key input
+    function changeDirection(e) {
+      switch (e.key) {
+        case "ArrowUp":
+          if (dy === 0) { dx = 0; dy = -1; }
+          break;
+        case "ArrowDown":
+          if (dy === 0) { dx = 0; dy = 1; }
+          break;
+        case "ArrowLeft":
+          if (dx === 0) { dx = -1; dy = 0; }
+          break;
+        case "ArrowRight":
+          if (dx === 0) { dx = 1; dy = 0; }
+          break;
+      }
+    }
+
+    // Event listener for the start over button
+    startOverBtn.addEventListener("click", initGame);
+
+    // Ensure canvas always has focus to register key events
+    canvas.addEventListener("click", () => canvas.focus());
+    document.addEventListener("keydown", changeDirection);
+
+    // Start the game
+    initGame();
+  </script>
+</body>
+</html>
